@@ -1,0 +1,76 @@
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+#include <avr/power.h>
+#endif
+
+//Definitions  
+const int HR_RX = 14; //D2
+const int HR_RX2 = 15;  //D1
+byte oldSample, oldSample2, sample, sample2;
+#define PIN 3
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(21, PIN, NEO_GRB + NEO_KHZ800);
+
+void setup() {
+  Serial.begin(115200);
+  // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
+  #if defined (__AVR_ATtiny85__)
+    if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
+  #endif
+  // End of trinket special code
+
+  pinMode (HR_RX, INPUT);  //Signal pin to input  
+  pinMode (HR_RX2, INPUT);  //Signal pin to input  
+  Serial.println("Waiting for heart beat...");
+  digitalWrite(0, LOW);
+
+  // Wait until a heart beat is detected  
+  while (!digitalRead(HR_RX)) {};
+  Serial.println ("Heart beat detected!");
+  
+  strip.begin();
+  strip.setBrightness(50);
+  strip.show(); // Initialize all pixels to 'off'
+}
+
+void loop() {
+
+  sample = digitalRead(HR_RX);  //Store signal output 
+  sample2 = digitalRead(HR_RX2);
+   Serial.print(sample);
+  Serial.print("  ");
+  Serial.println(sample2);
+  if ((sample && (oldSample != sample) ) or (sample2 && (oldSample2 != sample2))) { 
+  //  Serial.println("Beat");
+  colorWipe(12); // Red
+  whiteWipe(12);
+  delay(200);
+  }
+  oldSample = sample;           //Store last signal received 
+  oldSample2 = sample2;           //Store last signal received 
+}
+
+// Fill the dots one after the other with a color
+void colorWipe(uint8_t wait) {
+  uint32_t red = strip.Color(255, 0, 0);
+  uint32_t orange = strip.Color(255, 65, 0);
+  const int n = strip.numPixels();
+  for(uint16_t i=0; i<n/2 + 1; i++) {
+    strip.setPixelColor(i, red);
+    strip.setPixelColor(n-i, red);
+    strip.show();
+    delay(wait);
+  }
+}
+
+// Fill the dots one after the other with white
+void whiteWipe(uint8_t wait) {
+  uint32_t white = strip.Color(0, 0, 0);
+  const int n = strip.numPixels();
+  for(uint16_t i=0; i<n/2 + 1; i++) {
+    strip.setPixelColor(i, white);
+    strip.setPixelColor(n-i, white);
+    strip.show();
+    delay(wait);
+  }
+}
