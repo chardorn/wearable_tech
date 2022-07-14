@@ -6,7 +6,7 @@ This was a great oppotunity to pratice my microelectronic skills, but also to le
 
 ## Heartbeat Sensor 
 
-![heartbeat_image.png](heartbeat_image.jpg)
+![heartbeat_image.png](heartbeat_image.png)
 
 My second project was a vest with an embedded heartbeat sensor and LEDs displaying the heartbeats of the wearer. 
 
