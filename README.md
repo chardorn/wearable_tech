@@ -6,15 +6,17 @@ This was a great oppotunity to pratice my microelectronic skills, but also to le
 
 ## Heartbeat Sensor 
 
+This project was a vest with an embedded heartbeat sensor and LEDs displaying the heartbeats of the wearer. 
+Here is the heartbeat sensor and reciever I used: https://www.adafruit.com/product/1077
+
 ![heartbeat_image.png](heartbeat_image.png)
 
-My second project was a vest with an embedded heartbeat sensor and LEDs displaying the heartbeats of the wearer. 
-
-Here is the heartbeat sensor and reciever I used: https://www.adafruit.com/product/1077
 
 ## LED Network
 
-![network_image.png](network_image.png)
-
 For this project, I created a set of two harnesses embedded with LEDs, which are controlled by Arduino microcontrollers to change colors depending on their distance from one another. 
 There are two files: blue_scan_network and red_scan_network. Both of these are the same code, but with different output messages and different color settings. 
+
+![network_image.png](network_image.png)
+
+
