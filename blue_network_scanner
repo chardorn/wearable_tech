@@ -1,0 +1,138 @@
+/*
+ * Written by Charlotte Dorn
+ * Designing for use with multiple NodeMCUs
+ * 
+ * THIS IS THE BLUE NODE
+*/
+
+
+#include<ESP8266WiFi.h>
+#include <Adafruit_NeoPixel.h>
+#include <Wire.h>
+
+#define LED_PIN   3
+#define LED_PIN_2   15
+#define LED_COUNT 131
+#define BRIGHTNESS 100 // Set BRIGHTNESS to about 1/5 (max = 255)
+//Not yet including the backup dataline
+
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+
+const char* ssid = "YELLOW";         // The SSID (name) of the Wi-Fi network you want to connect to
+//Set ssid to color name!
+const char* password = "PASSWORD";     // The password of the Wi-Fi network
+
+int color_networks[4];
+
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println();
+  
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+  WiFi.softAP(ssid);             // Start the access point
+  
+  Serial.print("Access Point \"");
+  Serial.print(ssid);
+  Serial.println("\" started");
+  strip.begin(); // Initialize NeoPixel LEDs
+  strip.show();            // Turn OFF all pixels ASAP
+  strip.setBrightness(BRIGHTNESS); // Set BRIGHTNESS to about 1/5 (max = 255)
+}
+
+//void colorWipe(uint32_t color, int wait) {
+//  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+//    strip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
+//    strip.show();                          //  Update strip to match
+//    delay(wait);                           //  Pause for a moment
+//  }
+//}
+
+//Note: uint32_t is the color type
+void setColorValues(int color_array[]) {
+  
+  Serial.print("Color Values in: ");
+  for(int i = 0; i < sizeof(color_array); i++){
+    Serial.print(color_array[i]);
+  }
+  Serial.println("");
+  //Parameters: rssi values of each color [R, G, B, Y]
+  //Fix rssi values to a range, from -120 to 0 to 0 to 4, where 1 means is closest and 4 means its fair, but in range
+  
+  for(int i = 0; i < sizeof(color_array); i++){
+    color_array[i] = map(color_array[i], -120, -50, 5, 1); //map(value, fromLow, fromHigh, toLow, toHigh)
+  }
+
+  int pixel_array[LED_COUNT];
+  uint32_t grby_colors[] = {strip.Color(250, 0, 0), strip.Color(0, 250, 0), strip.Color(0, 0, 250), strip.Color(250, 250, 0)};
+  
+  int num_colors = 1;
+  for (int i = 0; i < sizeof(color_array); i++){
+    if (color_array[i] < 5){num_colors++;}
+  }
+  
+  Serial.print("Color Array after map: ");
+  for(int i = 0; i < sizeof(color_array); i++){
+    Serial.print(color_array[i]);
+  }
+  Serial.println("");
+  Serial.print("Num Colors ");
+  Serial.println(num_colors);
+
+    strip.clear();
+    for(int a = 0; a < LED_COUNT / num_colors; a += 1){
+        strip.setPixelColor(a*num_colors, grby_colors[2]);
+        
+        //Serial.print("pixel index and color"); Serial.print(a*num_colors); Serial.println(grby_colors[2]);
+        int count = 0;
+        for(int b = 0; b < 4; b ++){ //0,1,2,3
+          if(color_array[b] < 5){
+            count++;
+            if(a % color_array[b] == 0){strip.setPixelColor((a*num_colors)+count, grby_colors[b]);
+            strip.setPixelColor((a*num_colors)+count, grby_colors[b]);
+            }
+            else{strip.setPixelColor((a*num_colors)+count, grby_colors[2]);
+            }
+            //strip.setPixelColor((a*num_colors)+count, grby_colors[b]);
+            //Serial.print("pixel index and color"); Serial.print((a*num_colors)+count); Serial.println(grby_colors[b]);
+          }
+        }
+    }
+    strip.show();
+
+ 
+}
+
+void loop()
+{
+  int color_networks[4] = {-120,-120,-120,-120};
+  
+  Serial.print("Scan start ... ");
+  int n = WiFi.scanNetworks();
+  Serial.print(n);
+  Serial.println(" network(s) found");
+  for (int i = 0; i < n; i++) {
+//      Serial.print("Network name: ");
+//      Serial.print(WiFi.SSID(i));
+//      Serial.print(" and Signal strength: ");
+      int rssi = WiFi.RSSI(i);
+//      Serial.println(WiFi.RSSI(i));
+      if (WiFi.SSID(i) == "RED"){ color_networks[0] = rssi; }
+      if (WiFi.SSID(i) == "GREEN"){ color_networks[1] = rssi; }
+      if (WiFi.SSID(i) == "BLUE"){ color_networks[3] = rssi;  Serial.println("blue"); Serial.println("rssi");} //LETS PRETEND THE BLUE IS ACTUALLY YELLOW FOR NOW 
+      //strip.clear(); //IS THIS neccesary
+    }
+
+//  Serial.print("Color Networks in: ");
+//  Serial.println(sizeof(color_networks));
+//  for(int i = 0; i < sizeof(color_networks); i++){
+//    Serial.println(color_networks[i]);
+//  }
+//  Serial.println("");
+
+  setColorValues(color_networks);
+//  delay(50);
+}
