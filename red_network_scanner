@@ -1,0 +1,137 @@
+
+
+/*
+ * Written by Charlotte Dorn
+ * Designing for use with multiple NodeMCUs
+ * 
+ * THIS IS THE BLUE NODE
+ * RGB MAPPPING!!!!
+*/
+
+
+#include <WiFiNINA.h>
+
+#include <Adafruit_NeoPixel.h>
+#include <Wire.h>
+
+#define LED_PIN   2
+
+#define LED_COUNT 140
+#define BRIGHTNESS 100 // Set BRIGHTNESS to about 1/5 (max = 255)
+//Not yet including the backup dataline
+
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+const char* ssid = "REDARDUINO";         // The SSID (name) of the Wi-Fi network you want to connect to
+//Set ssid to color name!
+const char* password = "PASSWORD";     // The password of the Wi-Fi network
+
+
+int status = WL_IDLE_STATUS;
+WiFiServer server(80);
+
+
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println();
+
+  // Create open network. Change this line if you want to create an WEP network:
+  status = WiFi.beginAP(ssid, password);
+  
+  // wait 10 seconds for connection:
+  delay(10000);
+
+  // start the web server on port 80
+  server.begin();
+
+  printWiFiStatus();
+  
+  //WiFi.disconnect();
+  delay(100);
+  //WiFi.softAP(ssid);             // Start the access point
+  
+  Serial.print("Access Point \"");
+  Serial.print(ssid);
+  Serial.println("\" started");
+  strip.begin(); // Initialize NeoPixel LEDs
+  strip.show();            // Turn OFF all pixels ASAP
+  strip.setBrightness(BRIGHTNESS); // Set BRIGHTNESS to about 1/5 (max = 255)
+}
+
+void loop()
+{
+
+
+  WiFiClient client = server.available();   // listen for incoming clients
+
+  int other_color;
+  
+  Serial.print("Scan start ... ");
+  int n = WiFi.scanNetworks();
+  Serial.print(n);
+  Serial.println(" network(s) found");
+  for (int i = 0; i < n; i++) {
+      other_color = -120;
+      Serial.print("Network name: ");
+      Serial.print(WiFi.SSID(i));
+      Serial.print(" and Signal strength: ");
+      int rssi = WiFi.RSSI(i);
+      Serial.println(WiFi.RSSI(i));
+      if (WiFi.SSID(i) == "BLUEARDUINO"){ 
+        Serial.println("DETECTED DETECTED DETECTED");
+        other_color =  rssi; 
+        break;
+      }
+      //strip.clear(); //IS THIS neccesary
+    }
+
+  setColorValues(other_color);
+  delay(50);
+  
+}
+
+
+//Note: uint32_t is the color type
+void setColorValues(int other_color) {
+  
+  Serial.print("Color Value in: ");
+  Serial.print(other_color);
+  Serial.println("");
+  //Parameters: rssi values of each color [R, G, B, Y]
+  //Fix rssi values to a range, from -120 to 0 to 0 to 4, where 1 means is closest and 4 means its fair, but in range
+  
+  int mapped_other_color = map(other_color, -120, -50, 0, 100); //map(value, fromLow, fromHigh, toLow, toHigh)
+ 
+
+  int pixel_array[LED_COUNT];
+  uint32_t grby_colors[] = {strip.Color(250, 0, 0), strip.Color(0, 250, 0), strip.Color(0, 0, 250), strip.Color(250, 250, 0)};
+  
+
+  //Mix of the two colors
+  
+  Serial.print("Color  after map: ");
+  Serial.print(mapped_other_color);
+
+    strip.clear();
+    for(int a = 1; a < LED_COUNT; a += 1){
+        strip.setPixelColor(a, strip.Color(100, 0, mapped_other_color));
+          }
+    strip.show();
+}
+
+void printWiFiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print where to go in a browser:
+  Serial.print("To see this page in action, open a browser to http://");
+  Serial.println(ip);
+
+}
